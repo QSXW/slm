@@ -1,0 +1,6 @@
+[submodule "benchmarks/3rdparty/glm"]
+	path = benchmarks/3rdparty/glm
+	url = git@github.com:g-truc/glm.git
+[submodule "benchmarks/3rdparty/DirectXMath"]
+	path = benchmarks/3rdparty/DirectXMath
+	url = git@github.com:microsoft/DirectXMath.git
