@@ -1,2 +1,2 @@
 # slm
-Hight performance Vector Calculation Library
+High performance Vector Calculation Library

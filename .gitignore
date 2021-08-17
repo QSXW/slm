@@ -33,7 +33,8 @@
 
 # cmake build cache
 /build
+/out
 
 # vscode scripts
-/.vscode
-
+/.vscode*
+/.vs*
