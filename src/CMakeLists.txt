@@ -7,7 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(SRC_FILES
     nlm.h
-    slm.h)
+    slm.h
+    vector.h
+    matrix.h)
 
 source_group("\\" FILES ${SRC_FILES})
 source_group("\\x86\\" FILES ${ASM_FILES})
