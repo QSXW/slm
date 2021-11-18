@@ -20,13 +20,16 @@ extern "C" float slm_vec_dot(void *v1, void *v2);
 struct Vector;
 inline float dot(const Vector& u, const Vector& v)
 {
-    __m128 t, r;
+    m128 t, r;
 
-    t = _mm_mul_ps(*(__m128*) & u, *(__m128*) & v);
+    t = load<m128>(&u);
+    r = load<m128>(&v);
+
+    t = t * r;
     r = _mm_movehl_ps(t, t);
-    t = _mm_add_ps(t, r);
+    t = t + r;
     r = _mm_movehdup_ps(t);
-    t = _mm_add_ps(t, r);
+    t = t + r;
 
     return *((float*)&t);
 }
