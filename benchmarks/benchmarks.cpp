@@ -11,34 +11,33 @@
 
 namespace Test
 {
-    bool CompareFloatingPoint(float a, float b, float epsilon)
+
+bool CompareFloatingPoint(float a, float b, float epsilon)
+{
+    float diff = fabsf(a - b);
+
+    if (diff < epsilon)
     {
-        float diff = fabsf(a - b);
-
-        if (diff < epsilon)
-        {
-            return true;
-        }
-        Fail( "Test failed comparing %g with %g (abs diff=%g with epsilon=%g)\n", a, b, diff, epsilon);
-
-        return false;
+        return true;
     }
+    Fail( "Test failed comparing %g with %g (abs diff=%g with epsilon=%g)\n", a, b, diff, epsilon);
+
+    return false;
 }
 
-namespace Test
+namespace Check
 {
-    namespace Check
-    {
-        void Matrix4Transpose();
-        void dot();
-    }
-    
-    bool Benchmarks::Regressed = true;
+    void Matrix4Transpose();
+    void dot();
+}
 
-    static const std::vector<std::pair<const char *, std::function<void()>>> benchmarks = {
-        { "dot",              Check::dot              },
-        { "Matrix4Transpose", Check::Matrix4Transpose }
-    };
+bool Benchmarks::Regressed = true;
+
+static const std::vector<std::pair<const char *, std::function<void()>>> benchmarks = {
+    { "dot",              Check::dot              },
+    { "Matrix4Transpose", Check::Matrix4Transpose }
+};
+
 }
 
 int main()
