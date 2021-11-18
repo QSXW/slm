@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <vector>
 #include <functional>
+#include <map>
 
 #include "benchmarks.h"
 
@@ -27,26 +28,54 @@ bool CompareFloatingPoint(float a, float b, float epsilon)
 
 namespace Check
 {
-    void Matrix4Transpose();
-    void dot();
+    bool Matrix4Transpose();
+    bool dot();
 }
 
 bool Benchmarks::Regressed = true;
 
-static const std::vector<std::pair<const char *, std::function<void()>>> benchmarks = {
-    { "dot",              Check::dot              },
-    { "Matrix4Transpose", Check::Matrix4Transpose }
+static std::map<std::string, std::pair<bool, std::function<bool()>>> benchmarks = {
+    { "dot",              { false, Check::dot              }},
+    { "Matrix4Transpose", { false, Check::Matrix4Transpose }}
 };
 
 }
 
 int main()
 {
-    for (const auto &b : Test::benchmarks)
+    int sum  = 0;
+    int fail = 0;
+    for (auto &b : Test::benchmarks)
     {
-        printf("\n[%s]:\n", b.first);
-        b.second();
+        sum++;
+        auto &[name,  props] = b;
+        auto &[passed, func] = props;
+
+        passed = func();
+        if (!passed)
+        {
+            fail++;
+        }
     }
+
+    for (auto &b : Test::benchmarks)
+    {
+        auto &[name,  props] = b;
+        auto &[passed, func] = props;
+
+        if (passed)
+        {
+            printf("\033[1;33mTest: %s\033[0m\t=> %s", name.c_str(), "[ \033[0;32;32mOK\033[0m  ]");
+        }
+        else
+        {
+
+            printf("\033[1;33mTest: %s\033[0m\t=> %s", name.c_str(), "[ \033[1;31;40mFail\033[0m ]");
+        }
+    }
+
+    printf("\033[1;36mTest: passed %d/%d\033[0m", (sum - fail), sum);
+    return 0;
 
     return 0;
 }

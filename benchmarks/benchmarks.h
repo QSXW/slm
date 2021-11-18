@@ -23,7 +23,6 @@ template <class... Args>
 inline constexpr void Fail(const char *s, Args&&... args)
 {
     fprintf(stderr, s, std::forward<Args>(args)...);
-    __debugbreak();
 }
 
 template <class... Args>

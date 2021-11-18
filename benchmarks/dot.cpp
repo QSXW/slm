@@ -13,7 +13,7 @@ namespace Test
 namespace Check
 {
 
-void dot()
+bool dot()
 {
     static float a[4] = { 0 };
     static float b[4] = { 0 };
@@ -28,29 +28,28 @@ void dot()
     slm::Vector *v1 = (slm::Vector *)(&a);
     slm::Vector *v2 = (slm::Vector *)(&b);
 
-    Regress<100>([&]() {
-        RandomBuffer<float, 4, 1>(a);
-        RandomBuffer<float, 4, 1>(b);
+    RandomBuffer<float, 4, 1>(a);
+    RandomBuffer<float, 4, 1>(b);
 
-        std::cout << "a: \t" << *v1;
-        std::cout << "b: \t" << *v2;
+    std::cout << "a: \t" << *v1;
+    std::cout << "b: \t" << *v2;
 
-        auto ans1 = DirectX::XMVector4Dot(*d1, *d2);
-        auto ans2 = glm::dot(*g1, *g2);
-        auto ans3 = nlm::dot(*v1, *v2);
-        auto ans4 = slm::dot(*v1, *v2);
+    auto ans1 = DirectX::XMVector4Dot(*d1, *d2);
+    auto ans2 = glm::dot(*g1, *g2);
+    auto ans3 = nlm::dot(*v1, *v2);
+    auto ans4 = slm::dot(*v1, *v2);
 
-        std::cout << "drx::dot => \t" << ((float *)&ans1)[0] << std::endl;
-        std::cout << "glm::dot => \t" << ans2 << std::endl;
-        std::cout << "nlm::dot => \t" << ans3 << std::endl;
-        std::cout << "slm::dot => \t" << ans4 << std::endl;
-        std::cout << std::endl;
+    std::cout << "drx::dot => \t" << ((float *)&ans1)[0] << std::endl;
+    std::cout << "glm::dot => \t" << ans2 << std::endl;
+    std::cout << "nlm::dot => \t" << ans3 << std::endl;
+    std::cout << "slm::dot => \t" << ans4 << std::endl;
+    std::cout << std::endl;
 
-        if (!(Test::CompareFloatingPoint(((float *)&ans1)[0], ans4) && Test::CompareFloatingPoint(ans2, ans4)))
-        {
-            Fail("Failed to pass test\n");
-        }
-    });
+    if (!(Test::CompareFloatingPoint(((float *)&ans1)[0], ans4) && Test::CompareFloatingPoint(ans2, ans4)))
+    {
+        Fail("Failed to pass test\n");
+        return false;
+    }
 
     if (Benchmarks::Regressed)
     {
@@ -84,6 +83,8 @@ void dot()
         fclose(fp);
         free(gbuffer);
     }
+
+    return true;
 }
 
 } // namespace Check
