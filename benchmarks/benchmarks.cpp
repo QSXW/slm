@@ -65,16 +65,16 @@ int main()
 
         if (passed)
         {
-            printf("\033[1;33mTest: %s\033[0m\t=> %s", name.c_str(), "[ \033[0;32;32mOK\033[0m  ]");
+            printf("\033[1;33mTest: %s\033[0m\t=> %s\n", name.c_str(), "[ \033[0;32;32mOK\033[0m  ]");
         }
         else
         {
 
-            printf("\033[1;33mTest: %s\033[0m\t=> %s", name.c_str(), "[ \033[1;31;40mFail\033[0m ]");
+            printf("\033[1;33mTest: %s\033[0m\t=> %s\n", name.c_str(), "[ \033[1;31;40mFail\033[0m ]");
         }
     }
 
-    printf("\033[1;36mTest: passed %d/%d\033[0m", (sum - fail), sum);
+    printf("\033[1;36mTest: passed %d/%d\033[0m\n", (sum - fail), sum);
     return 0;
 
     return 0;
