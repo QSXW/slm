@@ -74,7 +74,7 @@ bool Matrix4Transpose()
         {
             Succeed("slm::transpose();");
             slm::Timer t;
-            RegressV<times>(slm::transpose, *s);
+            RegressV<times>(slm::Matrix4::transpose, *s);
         }
         remove("test.f");
         fclose(fp);

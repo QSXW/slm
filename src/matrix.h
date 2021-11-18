@@ -20,6 +20,8 @@ public:
     static constexpr int Size = 4*4;
     static constexpr int RowNumber = 4;
 
+    static Matrix4 transpose(const Matrix4 &m);
+
 public:
     __fastcall Matrix4()
     {
@@ -46,9 +48,7 @@ public:
 
     Matrix4 Transpose()
     {
-        Matrix4 m;
-        slm_mat4_transpose((void *)this, (void *)&m);
-        return m;
+        return transpose(*this);
     }
 
     friend std::ostream & operator << (std::ostream &o, const Matrix4 &m);
@@ -72,7 +72,7 @@ inline std::ostream & operator << (std::ostream &o, const Matrix4 &m)
     return o;
 }
 
-inline Matrix4 transpose(const Matrix4 &m)
+inline Matrix4 Matrix4::transpose(const Matrix4 &m)
 {
     static const int SL_ALIGNED(64) indices[] = {
         0, 4,  8, 12,
