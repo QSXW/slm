@@ -16,6 +16,6 @@ source_group("\\x86\\" FILES ${ASM_FILES})
 add_library(${PROJECT_NAME} INTERFACE
     ${SRC_FILES})
 
-target_compile_options(${PROJECT_NAME} INTERFACE -march=skylake-avx512 -mavx)
+target_compile_options(${PROJECT_NAME} INTERFACE $<$<CXX_COMPILER_ID:GNU>:-march=skylake-avx512 -mavx>)
 
 target_include_directories(${PROJECT_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
