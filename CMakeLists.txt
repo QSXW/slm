@@ -5,6 +5,7 @@ project(slm LANGUAGES C CXX)
 
 add_compile_options(${COMPILER_OPTIONS})
 
+add_subdirectory(sl)
 add_subdirectory(src)
 add_subdirectory(x86)
 add_subdirectory(benchmarks)

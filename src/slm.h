@@ -1,15 +1,11 @@
 #pragma once
 
 #include <iostream>
-#include "slcore.h"
+#include "sl.h"
 
 namespace slm
 {
-    template <class T, class O>
-    inline constexpr T Cast(O &o)
-    {
-        return *(T *)(&o);
-    }
+    using namespace sl;
 }
 
 extern "C" void  slm_vec_add(void *v1, void *v2, void *v3);
@@ -44,19 +40,19 @@ namespace slm
             Vector()
                 : x(0), y(0), z(0), w(0)
             {
-                
+
             }
 
             __fastcall Vector(float n)
             {
                 auto t = _mm_set1_ps(n);
-                _mm_store_ps(RCAST<float *>(this), t);
+                _mm_store_ps(rcast<float *>(this), t);
             }
 
             Vector(float x, float y, float z)
                 : x(x), y(y), z(z), w(0)
             {
-                
+
             }
 
             Vector(float x, float y, float z, float w)
@@ -159,7 +155,7 @@ namespace slm
             __fastcall Matrix4()
             {
                 auto t = _mm512_set1_ps(0.0f);
-                _mm512_store_ps(RCAST<float *>(this), t);
+                _mm512_store_ps(rcast<float *>(this), t);
             }
 
             Vector& operator[](size_t index)
@@ -187,7 +183,7 @@ namespace slm
             }
 
             friend std::ostream & operator << (std::ostream &o, const Matrix4 &m);
-        
+
         private:
             union U
             {
@@ -217,16 +213,16 @@ namespace slm
             };
 
             auto t = _mm512_load_epi32(indices);
-            auto r = _mm512_permutexvar_ps(t, Cast<__m512>(m));
-            return Cast<Matrix4>(r);
+            auto r = _mm512_permutexvar_ps(t, bcast<__m512>(m));
+            return bcast<Matrix4>(r);
         }
     }
-    
+
     inline namespace version
     {
         using namespace avx;
     }
-    
+
 }
 
 
