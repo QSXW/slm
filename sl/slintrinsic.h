@@ -239,6 +239,14 @@ inline constexpr T movehl(T h, T l)
     {
         return _mm_movehl_ps(bcast<__m128>(h), bcast<__m128>(l));
     }
+    if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
+    {
+        return _mm256_movehl_ps(bcast<__m256>(h));
+    }
+    if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
+    {
+        return _mm512_movehl_ps(bcast<__m512>(h));
+    }
     return T();
 }
 
@@ -248,6 +256,14 @@ inline constexpr T movehdup(T h)
     if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
     {
         return _mm_movehdup_ps(bcast<__m128>(h));
+    }
+    if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
+    {
+        return _mm256_movehdup_ps(bcast<__m256>(h));
+    }
+    if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
+    {
+        return _mm512_movehdup_ps(bcast<__m512>(h));
     }
     return T();
 }
