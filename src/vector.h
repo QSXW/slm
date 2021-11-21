@@ -26,9 +26,9 @@ inline float dot(const Vector& u, const Vector& v)
     r = load<m128>(&v);
 
     t = t * r;
-    r = _mm_movehl_ps(t, t);
+    r = movehl(t, t);
     t = t + r;
-    r = _mm_movehdup_ps(t);
+    r = movehdup(t);
     t = t + r;
 
     return *((float*)&t);
