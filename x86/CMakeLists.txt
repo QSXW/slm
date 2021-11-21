@@ -5,7 +5,8 @@ project(x86 ASM_NASM)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(ASM_FILES
     matrix.asm
-    vector.asm)
+    vector.asm
+    benchmarks.asm)
 
 source_group("\\" FILES ${ASM_FILES})
 

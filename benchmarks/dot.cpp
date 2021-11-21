@@ -54,33 +54,31 @@ bool dot()
     if (Benchmarks::Regressed)
     {
         static constexpr size_t times = 10000000;
-        FILE *fp = fopen("test.f", "wb+");
         gbuffer = (float *)malloc(sizeof(float) * times);
         {
             Succeed("DirectX::XMVector4Dot()");
             slm::Timer t;
             RegressV<times>(DirectX::XMVector4Dot, *d1, *d2);
         }
-        fwrite(gbuffer, sizeof(float) * times, 1, fp);
+        Submit<float, times>(gbuffer);
         {
             Succeed("glm::dot()");
             slm::Timer t;
             RegressX(times, glm::dot(*g1, *g2));
         }
-        fwrite(gbuffer, sizeof(float) * times, 1, fp);
+        Submit<float, times>(gbuffer);
         {
             Succeed("nlm::Dot()");
             slm::Timer t;
             RegressV<times>(nlm::dot, *v1, *v2);
         }
-        fwrite(gbuffer, sizeof(float) * times, 1, fp);
+        Submit<float, times>(gbuffer);
         {
             Succeed("slm::Dot();");
             slm::Timer t;
             RegressV<times>(slm::dot, *v1, *v2);
         }
-        remove("test.f");
-        fclose(fp);
+        Submit<float, times>(gbuffer);
         free(gbuffer);
     }
 

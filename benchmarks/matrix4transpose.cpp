@@ -51,33 +51,25 @@ bool Matrix4Transpose()
     if (Benchmarks::Regressed)
     {
         static constexpr size_t times = 1000000;
-        FILE *fp = fopen("test.f", "wb+");
         gbuffer = (float *)malloc(sizeof(float) * times);
         {
             Succeed("DirectX::XMMatrixTranspose()");
             slm::Timer t;
             RegressV<times>(DirectX::XMMatrixTranspose, *d);
         }
-        fwrite(gbuffer, sizeof(float) * times, 1, fp);
+        Submit<float, times>(gbuffer);
         {
             Succeed("glm::transpose()");
             slm::Timer t;
             RegressX(times, glm::transpose(*g));
         }
-        // fwrite(gbuffer, sizeof(float) * times, 1, fp);
-        // {
-        //     Succeed("nlm::Dot()");
-        //     slm::Timer t;
-        //     RegressV<times>(nlm::dot, *v1, *v2);
-        // }
-        fwrite(gbuffer, sizeof(float) * times, 1, fp);
+        Submit<float, times>(gbuffer);
         {
             Succeed("slm::transpose();");
             slm::Timer t;
             RegressV<times>(slm::Matrix4::transpose, *s);
         }
-        remove("test.f");
-        fclose(fp);
+        Submit<float, times>(gbuffer);
         free(gbuffer);
     }
 

@@ -4,8 +4,16 @@
 #include <cstdlib>
 #include <iostream>
 
+extern "C" int slm_submit_result(void *ptr, size_t size);
+
 namespace Test
 {
+
+template <class T, size_t size>
+int Submit(T *ptr)
+{
+    return slm_submit_result(ptr, sizeof(T) * size);
+}
 
 static float *gbuffer = nullptr;
 
