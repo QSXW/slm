@@ -1,13 +1,14 @@
 #pragma once
 
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <cassert>
 
 #include <new>
 #include <string>
 
-#if defined( _MSC_VER )
+#ifdef _MSC_VER
 #   define SL_ALIGNED(x) __declspec(align(x))
 #	define SL_ALIGNED_STRUCT(x) struct __declspec(align(x))
 #	define SL_ALIGNED_CLASS(x) class __declspec(align(x)))
@@ -18,7 +19,7 @@
 
 #pragma warning(disable: 4996)
 
-#elif defined( __GNUC__ )
+#elif defined(__GNUC__)
 #   define SL_ALIGNED(x) __attribute__((aligned(x)))
 #	define SL_ALIGNED_STRUCT(x) struct __attribute__((aligned(x)))
 #	define SL_ALIGNED_CLASS(x) class __attribute__((aligned(x)))
@@ -31,27 +32,26 @@ namespace sl
 template <class T, size_t align>
 inline T *aligned_malloc(size_t size)
 {
-#ifdef __GNUC__
-	auto ptr = std::aligned_alloc(size * sizeof(T), align);
-#else
-	auto ptr = ::_aligned_malloc(size * sizeof(T), align);
+    T *ptr = nullptr;
+#ifdef _MSC_VER
+    ptr = ::_aligned_malloc(size * sizeof(T), align);
+#elif defined(__GNUC__) && defined(__linux__)
+    ptr = aligned_alloc(size * sizeof(T), align);
 #endif
-	return ptr ? static_cast<T *>(ptr) : throw std::bad_alloc{};
+    return ptr ? static_cast<T *>(ptr) : throw std::bad_alloc{};
 }
 
 inline void aligned_free(void* ptr)
 {
 #ifdef __GNUC__
-	std::free(ptr);
+    std::free(ptr);
 #else
-	::_aligned_free(ptr);
+    ::_aligned_free(ptr);
 #endif
 }
 
 #define SLASSERT(...) assert(__VA_ARGS__)
-
 #define SLBIND(x) std::bind(&x, this, std::placeholders::_1)
-
 #define SLDEBUG defined( DEBUG) || defined( _DEBUG )
 
 #if defined( WIN32 ) || defined( _WIN32 )
@@ -70,7 +70,10 @@ elif defined(__linux__)
  */
 #define U8(str) u8##str
 #define BIT(x) (1 << (x))
-#define SLLEN(a) sizeof(a) / sizeof((a)[0])
+#define CAT1(p, s) #p##s
+#define SLALIGN(x, a) (((x) + (a) - 1) & ~((a) - 1))
+#define SLROTATE(a, b) (a) = ((a) + 1) % (b)
+#define SL_ARRAY_LENGTH(a) sizeof(a) / sizeof((a)[0])
 
 /*
  * @brief: Type Definitions
@@ -84,17 +87,31 @@ using UINT32 = unsigned int;
 using INT64  = int64_t;
 using UINT64 = uint64_t;
 
+using Anonymous = void*;
+
 /*
  * @brief: Helper Template
  */
-template <class T1, class T2>
-inline constexpr bool is_same()
+template <class T, class U>
+inline constexpr bool IsReferenceOf()
 {
-    return std::is_same_v<T1, T2>;
+    return std::is_same<T&, U>();
+}
+
+template <class T, class U>
+inline constexpr bool IsPrimitiveOf()
+{
+    return std::is_same<T, U>() || IsReferenceOf<T, U>();
+}
+
+template <class T, class U>
+inline constexpr bool IsPointerOf()
+{
+    return std::is_same<T*, U>();
 }
 
 template <class T1, class T2, class T3>
-inline constexpr bool is_same()
+inline constexpr bool IsPrimitiveOf()
 {
     if constexpr (std::is_same_v<T1, T2> || std::is_same_v<T1, T3>)
     {
@@ -104,7 +121,7 @@ inline constexpr bool is_same()
 }
 
 template <class T1, class T2, class T3, class T4>
-inline constexpr bool is_same()
+inline constexpr bool IsPrimitiveOf()
 {
     if constexpr (std::is_same_v<T1, T2> ||
         std::is_same_v<T1, T3> ||
@@ -134,7 +151,7 @@ static inline bool Equals(const char *str1, const char *str2)
 
 class Exception : public std::exception
 {
-public: Exception(const char *what) noexcept : 
+public: Exception(const char *what) noexcept :
 #ifdef _MSC_VER
 std::exception(what, 1) { }
 #elif __GNUC__
@@ -157,35 +174,89 @@ public:
     {
 
     }
+
+    RuntimeException(const std::string &what) noexcept :
+        RuntimeException(what.c_str())
+    {
+
+    }
 };
 
-#define SLVIRTUAL 
-#define SLINLINE
+class StaticException : public Exception
+{
+public:
+    StaticException(const char *what) noexcept :
+        Exception(what)
+    {
 
-#define CAT1(p, s) #p##s
+    }
 
+    StaticException(const std::string &what) noexcept :
+        StaticException(what.c_str())
+    {
+
+    }
+};
+
+/*
+ * @brief Static Exception means the case should not occur anyway when running.
+ *  Using RuntimeException to check runtime error instead.
+ */
+#ifdef SLDEBUG
+#define THROWIF(expr, what) \
+    if (!!(expr)) \
+    { \
+        throw StaticException(what); \
+    }
+#else
+#define THROWIF
+#endif
+
+#define ThrowIf(expr, what) \
+    if (!!(expr)) \
+    { \
+        throw RuntimeException(what); \
+    }
+
+#define DERROR(name, str) static constexpr const char name[] = str;
 namespace SError
 {
-    constexpr const char OutOfBound[]  = "Index was out of bound";
-    constexpr const char OutOfMemory[] = "No more memory on the runtime";
+    DERROR(OutOfBound,           "Index was out of bound"                  )
+    DERROR(OutOfMemory,          "No more memory on the runtime"           )
+    DERROR(InvalidSingleton,     "Cannot construct more than one singleton")
+    DERROR(SelfAssignment,       "Self-assignment is not permitted"        )
+    DERROR(NullPointerReference, "Null pointer reference"                  )
+    DERROR(UnableToOpenFile,     "Unable to open the file specified"       )
 }
 
-#define DEFINE_ENUM_OP_AND(T, U) \
+#define SL_DEFINE_ENUM_OP_AND(T, U) \
     inline constexpr U operator&(T lhs, T rhs) \
     { \
         return static_cast<U>(lhs) & static_cast<U>(rhs); \
     }
 
-#define DEFINE_ENUM_OP_OR(T, U) \
+#define SL_DEFINE_ENUM_OP_AND_EQUAL(T, U) \
+    inline constexpr T operator&=(T lhs, T rhs) \
+    { \
+        return static_cast<T>(static_cast<U>(lhs) & static_cast<U>(rhs)); \
+    }
+
+#define SL_DEFINE_ENUM_OP_OR(T, U) \
     inline constexpr T operator|(T lhs, T rhs) \
     { \
         return static_cast<T>(static_cast<U>(lhs) | static_cast<U>(rhs)); \
     }
 
-#define DEFINE_ENUM_OP_OR_EQUAL(T, U) \
+#define SL_DEFINE_ENUM_OP_OR_EQUAL(T, U) \
     inline constexpr T operator|=(T lhs, T rhs) \
     { \
         return static_cast<T>(static_cast<U>(lhs) | static_cast<U>(rhs)); \
     }
+
+#define SL_DEFINE_BITWISE_OPERATION(T, U) \
+    SL_DEFINE_ENUM_OP_AND(T, U) \
+    SL_DEFINE_ENUM_OP_AND_EQUAL(T, U) \
+    SL_DEFINE_ENUM_OP_OR(T, U) \
+    SL_DEFINE_ENUM_OP_OR_EQUAL(T, U)
 
 }

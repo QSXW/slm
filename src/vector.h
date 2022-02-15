@@ -18,17 +18,15 @@ extern "C" void  slm_vec_mul(void *v1, const float factor, void *v3);
 extern "C" float slm_vec_dot(void *v1, void *v2);
 
 struct Vector;
-inline float dot(const Vector& u, const Vector& v)
+inline float dot(const Vector &u, const Vector &v)
 {
-    m128 t, r;
-
-    t = load<m128>(&u);
-    r = load<m128>(&v);
+    floatx4 t{ &u };
+    floatx4 r{ &v };
 
     t = t * r;
-    r = movehl(t, t);
+    r = t.movehl(t);
     t = t + r;
-    r = movehdup(t);
+    r = t.movehdup();
     t = t + r;
 
     return *((float*)&t);

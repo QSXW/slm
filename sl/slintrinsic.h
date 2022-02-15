@@ -9,461 +9,129 @@
 #include "slapi.h"
 #include "slcast.h"
 
-#ifndef __GNUC__
+using namespace sl;
 
 #define SL_DONT_USE_DIV [[deprecated("avoid to use, try convert to a multiply before broadcast")]]
 
-using m32 = uint32_t;
-using m64 = uint64_t;
+#define CONSTRUCTOR_PRIMITIVE() R(Primitive v) : v{ v } {} operator Primitive() const { return v; };
+#define CONSTURCTOR_SET1(P, S, T) R(T n) : v{ _m##P##_set1_##S(n) } {}
+#define CONSTURCTOR_LOAD(P, S, T) R(const void *data) : v{ _m##P##_load_##S((T *)data) } {}
 
-using m128 = __m128;
-using m256 = __m256;
-using m512 = __m512;
+#define DEFINE_OPERATOR(P, N, O, T) R &operator N (R &b) { v = _m##P##_##O##_##T(v, b.v); return *this; }
+#define OPEARTOR_MUL(P, T) DEFINE_OPERATOR(P, *, mul, T)
+#define OPEARTOR_ADD(P, T) DEFINE_OPERATOR(P, +, add, T)
 
-using m128i = __m128i;
-using m256i = __m256i;
-using m512i = __m512i;
-
-using m128d = __m128d;
-using m256d = __m256d;
-using m512d = __m512d;
-
-template <class T, class U>
-inline constexpr T load(const U *m)
+struct int32x4
 {
-    if constexpr (sl::is_same<T, m128, m128i, m128d>())
+#define R int32x4
+    using Primitive = __m128i;
+    CONSTURCTOR_SET1(m, epi8,   int8_t)
+    CONSTURCTOR_SET1(m, epi16,  int16_t)
+    CONSTURCTOR_SET1(m, epi32,  int32_t)
+    CONSTURCTOR_SET1(m, epi64x, int64_t)
+    CONSTURCTOR_LOAD(m, si128,  Primitive)
+
+#undef R
+private:
+    Primitive v;
+};
+
+struct floatx4
+{
+#define R floatx4
+public:
+    using Primitive = __m128;
+
+public:
+    floatx4() = default;
+
+    CONSTRUCTOR_PRIMITIVE()
+    CONSTURCTOR_SET1(m, ps, float)
+    CONSTURCTOR_LOAD(m, ps, float)
+
+    OPEARTOR_MUL(m, ps)
+
+    floatx4 &operator+(floatx4 &other)
     {
-        return bcast<T>(_mm_load_ps(rcast<const float*>(m)));
+        v = _mm_add_ps(v, other.v);
+        return *this;
     }
-    if constexpr (sl::is_same<T, m256, m256i, m256d>())
+
+    operator float() const
     {
-        return bcast<T>(_mm256_load_ps(rcast<const float*>(m)));
+        return *((float*)&v);
     }
-    if constexpr (sl::is_same<T, m512, m512i, m512d>())
+
+    floatx4 movehl(floatx4 &other)
     {
-        return bcast<T>(_mm512_load_ps(rcast<const float*>(m)));
+        return _mm_movehl_ps(v, other.v);
     }
-}
 
-template <class T, class U>
-inline constexpr T set(const U n)
-{
-    if constexpr (sl::is_same<U, m64>())
+    floatx4 movehdup() const
     {
-        if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-        {
-            return bcast<T>(_mm_set1_epi64x(n));
-        }
-        if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-        {
-            return bcast<T>(_mm256_set1_epi64x(n));
-        }
-        if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-        {
-            return bcast<T>(_mm512_set1_epi64x(n));
-        }
+        return _mm_movehdup_ps(v);
     }
-    if constexpr (sl::is_same<U, double>())
+
+#undef R
+private:
+    Primitive v;
+};
+
+struct int32x8
+{
+#define R int32x8
+    using Primitive = __m256i;
+    CONSTURCTOR_SET1(m256, epi8,   int8_t)
+    CONSTURCTOR_SET1(m256, epi16,  int16_t)
+    CONSTURCTOR_SET1(m256, epi32,  int32_t)
+    CONSTURCTOR_SET1(m256, epi64x, int64_t)
+    CONSTURCTOR_LOAD(m256, si256, Primitive)
+
+#undef R
+private:
+    Primitive v;
+};
+
+struct int32x16
+{
+#define R int32x16
+public:
+    using Primitive = __m512i;
+
+public:
+    CONSTRUCTOR_PRIMITIVE();
+    CONSTURCTOR_SET1(m512, epi8,   int8_t)
+    CONSTURCTOR_SET1(m512, epi16,  int16_t)
+    CONSTURCTOR_SET1(m512, epi32,  int32_t)
+    CONSTURCTOR_SET1(m512, epi64, int64_t)
+    CONSTURCTOR_LOAD(m512, si512, Primitive)
+
+#undef R
+private:
+    Primitive v;
+};
+
+struct floatx16
+{
+#define R floatx16
+public:
+    using Primitive = __m512;
+
+public:
+    floatx16() = default;
+
+    CONSTRUCTOR_PRIMITIVE()
+    CONSTURCTOR_SET1(m512, ps, float)
+    CONSTURCTOR_LOAD(m512, ps, float)
+
+    Primitive permutexvar_ps(const int32x16 &vindex)
     {
-        if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-        {
-            return bcast<T>(_mm_set1_pd(n));
-        }
-        if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-        {
-            return bcast<T>(_mm256_set1_pd(n));
-        }
-        if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-        {
-            return bcast<T>(_mm512_set1_pd(n));
-        }
+       return _mm512_permutexvar_ps(vindex, v);
     }
-    if constexpr (sl::is_same<U, m32>())
-    {
-        if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-        {
-            return bcast<T>(_mm_set1_epi32(n));
-        }
-        if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-        {
-            return bcast<T>(_mm256_set1_epi32(n));
-        }
-        if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-        {
-            return bcast<T>(_mm512_set1_epi32(n));
-        }
-    }
-    if constexpr (sl::is_same<U, float>())
-    {
-        if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-        {
-            return bcast<T>(_mm_set1_ps(n));
-        }
-        if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-        {
-            return bcast<T>(_mm256_set1_ps(n));
-        }
-        if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-        {
-            return bcast<T>(_mm512_set1_ps(n));
-        }
-    }
-    if constexpr (sl::is_same<T, unsigned short>())
-    {
-        if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-        {
-            return bcast<T>(_mm_set1_epi16(n));
-        }
-        if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-        {
-            return bcast<T>(_mm256_set1_epi16(n));
-        }
-        if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-        {
-            return bcast<T>(_mm512_set1_epi16(n));
-        }
-    }
-    if constexpr (sl::is_same<T, unsigned char>())
-    {
-        if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-        {
-            return bcast<T>(_mm_set1_epi8(n));
-        }
-        if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-        {
-            return bcast<T>(_mm256_set1_epi8(n));
-        }
-        if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-        {
-            return bcast<T>(_mm256_set1_epi8(n));
-        }
-    }
-    return T();
-}
 
-template <class T>
-inline constexpr T loadu(const void* m)
-{
-    if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-    {
-        return bcast<T>(_mm_loadu_epi64(m));
-    }
-    if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-    {
-        return bcast<T>(_mm256_loadu_epi64(m));
-    }
-    if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-    {
-        return bcast<T>(_mm512_loadu_epi64(m));
-    }
-}
+#undef R
+private:
+    Primitive v;
+};
 
-template <class T, class P>
-inline constexpr void store(P dst, T src)
-{
-    if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-    {
-        _mm_store_ps(rcast<float *>(dst), bcast<__m256>(src));
-    }
-    if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-    {
-        _mm256_store_ps(rcast<float*>(dst), bcast<__m256>(src));
-    }
-    if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-    {
-        _mm512_store_ps(rcast<float*>(dst), bcast<__m512>(src));
-    }
-}
-
-template <class T, class P>
-inline constexpr T storeu(P dst, T src)
-{
-    if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-    {
-        _mm_storeu_epi64(dst, src);
-    }
-    if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-    {
-        _mm256_storeu_epi64(dst, src);
-    }
-    if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-    {
-        _mm512_storeu_epi64(dst, src);
-    }
-}
-
-template <class T, size_t index, class U>
-inline constexpr T &Value(U u)
-{
-    return *(rcast<T*>(&u) + index);
-}
-
-template <class T, class P, class U>
-inline constexpr T gather32(P ptr, U vindex, const int scale)
-{
-    if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-    {
-        return _mm_i32gather_epi32(ptr, vindex, scale);
-    }
-    if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-    {
-        return _mm256_i32gather_epi32(ptr, vindex, scale);
-    }
-    if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-    {
-        return _mm512_i32gather_epi32(ptr, vindex, scale);
-    }
-}
-
-template <class T, class P, class U>
-inline constexpr T gather64(P ptr, U vindex, const int scale)
-{
-    if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-    {
-        return _mm_i64gather_epi64(ptr, vindex, scale);
-    }
-    if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-    {
-        return _mm256_i64gather_epi64(ptr, vindex, scale);
-    }
-    if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-    {
-        return _mm512_i64gather_epi64(ptr, vindex, scale);
-    }
-}
-
-template <class T>
-inline constexpr T movehl(T h, T l)
-{
-    if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-    {
-        return _mm_movehl_ps(bcast<__m128>(h), bcast<__m128>(l));
-    }
-    if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-    {
-        return _mm256_movehl_ps(bcast<__m256>(h));
-    }
-    if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-    {
-        return _mm512_movehl_ps(bcast<__m512>(h));
-    }
-    return T();
-}
-
-template <class T>
-inline constexpr T movehdup(T h)
-{
-    if constexpr (sl::is_same<T, __m128, __m128i, __m128d>())
-    {
-        return _mm_movehdup_ps(bcast<__m128>(h));
-    }
-    if constexpr (sl::is_same<T, __m256, __m256i, __m256d>())
-    {
-        return _mm256_movehdup_ps(bcast<__m256>(h));
-    }
-    if constexpr (sl::is_same<T, __m512, __m512i, __m512d>())
-    {
-        return _mm512_movehdup_ps(bcast<__m512>(h));
-    }
-    return T();
-}
-
-inline m128 operator+(m128 a, m128 b)
-{
-    return _mm_add_ps(a, b);
-}
-
-inline m128i operator+(m128i a, m128i b)
-{
-    return _mm_add_epi32(a, b);
-}
-
-inline m128d operator+(m128d a, m128d b)
-{
-    return _mm_add_pd(a, b);
-}
-
-inline m256 operator+(m256 a, m256 b)
-{
-    return _mm256_add_ps(a, b);
-}
-
-inline m256i operator+(m256i a, m256i b)
-{
-    return _mm256_add_epi32(a, b);
-}
-
-inline m256d operator+(m256d a, m256d b)
-{
-    return _mm256_add_pd(a, b);
-}
-
-inline m512 operator+(m512 a, m512 b)
-{
-    return _mm512_add_ps(a, b);
-}
-
-inline m512i operator+(m512i a, m512i b)
-{
-    return _mm512_add_epi32(a, b);
-}
-
-inline m512d operator+(m512d a, m512d b)
-{
-    return _mm512_add_pd(a, b);
-}
-
-inline m128 operator-(m128 a, m128 b)
-{
-    return _mm_sub_ps(a, b);
-}
-
-inline m128i operator-(m128i a, m128i b)
-{
-    return _mm_sub_epi32(a, b);
-}
-
-inline m128d operator-(m128d a, m128d b)
-{
-    return _mm_sub_pd(a, b);
-}
-
-inline m256 operator-(m256 a, m256 b)
-{
-    return _mm256_sub_ps(a, b);
-}
-
-inline m256i operator-(m256i a, m256i b)
-{
-    return _mm256_sub_epi32(a, b);
-}
-
-inline m256d operator-(m256d a, m256d b)
-{
-    return _mm256_sub_pd(a, b);
-}
-
-inline m512 operator-(m512 a, m512 b)
-{
-    return _mm512_sub_ps(a, b);
-}
-
-inline m512i operator-(m512i a, m512i b)
-{
-    return _mm512_sub_epi32(a, b);
-}
-
-inline m512d operator-(m512d a, m512d b)
-{
-    return _mm512_sub_pd(a, b);
-}
-
-inline m128 operator*(m128 a, m128 b)
-{
-    return _mm_mul_ps(a, b);
-}
-
-inline m128i operator*(m128i a, m128i b)
-{
-    return _mm_mul_epi32(a, b);
-}
-
-inline m128d operator*(m128d a, m128d b)
-{
-    return _mm_mul_pd(a, b);
-}
-
-inline m256 operator*(m256 a, m256 b)
-{
-    return _mm256_mul_ps(a, b);
-}
-
-inline m256i operator*(m256i a, m256i b)
-{
-    return _mm256_mul_epi32(a, b);
-}
-
-inline m256d operator*(m256d a, m256d b)
-{
-    return _mm256_mul_pd(a, b);
-}
-
-inline m512 operator*(m512 a, m512 b)
-{
-    return _mm512_mul_ps(a, b);
-}
-
-inline m512i operator*(m512i a, m512i b)
-{
-    return _mm512_mul_epi32(a, b);
-}
-
-inline m512d operator*(m512d a, m512d b)
-{
-    return _mm512_mul_pd(a, b);
-}
-
-inline SL_DONT_USE_DIV m128 operator/(m128 a, m128 b)
-{
-    return _mm_div_ps(a, b);
-}
-
-
-inline SL_DONT_USE_DIV m128i operator/(m128i a, m128i b)
-{
-    return _mm_div_epi32(a, b);
-}
-
-inline SL_DONT_USE_DIV m128d operator/(m128d a, m128d b)
-{
-    return _mm_div_pd(a, b);
-}
-
-inline SL_DONT_USE_DIV m256 operator/(m256 a, m256 b)
-{
-    return _mm256_div_ps(a, b);
-}
-
-inline  m256i operator/ SL_DONT_USE_DIV (m256i a, m256i b)
-{
-    return _mm256_div_epi32(a, b);
-}
-
-inline SL_DONT_USE_DIV m256d operator/(m256d a, m256d b)
-{
-    return _mm256_div_pd(a, b);
-}
-
-inline SL_DONT_USE_DIV m512 operator/(m512 a, m512 b)
-{
-    return _mm512_div_ps(a, b);
-}
-
-inline SL_DONT_USE_DIV m512i operator/(m512i a, m512i b)
-{
-    return _mm512_div_epi32(a, b);
-}
-
-inline SL_DONT_USE_DIV m512d operator/(m512d a, m512d b)
-{
-    return _mm512_div_pd(a, b);
-}
-
-static inline std::ostream& operator<<(std::ostream& o, __m256i v)
-{
-    printf("%4d%4d%4d%4d%4d%4d%4d%4d",
-        Value<int, 0>(v),
-        Value<int, 1>(v),
-        Value<int, 2>(v),
-        Value<int, 3>(v),
-        Value<int, 4>(v),
-        Value<int, 5>(v),
-        Value<int, 6>(v),
-        Value<int, 7>(v)
-        );
-
-    return o;
-}
-
-#endif /* __GNUC__ */
 #endif /* __SLINTRINSIC_H__ */

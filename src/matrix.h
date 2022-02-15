@@ -81,8 +81,9 @@ inline Matrix4 Matrix4::transpose(const Matrix4 &m)
         3, 7, 11, 15
     };
 
-    auto vindex = load<m512i>(indices);
-    auto res = _mm512_permutexvar_ps(vindex, bcast<m512>(m));
+    int32x16 vindex{ indices };
+    floatx16 v{ &m };
+    auto res = v.permutexvar_ps(vindex);
 
     return bcast<Matrix4>(res);
 }
