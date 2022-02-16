@@ -83,7 +83,7 @@ inline Matrix4 Matrix4::transpose(const Matrix4 &m)
 
     int32x16 vindex{ indices };
     floatx16 v{ &m };
-    auto res = v.permutexvar_ps(vindex);
+    auto res = v.permutexvar(vindex);
 
     return bcast<Matrix4>(res);
 }

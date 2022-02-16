@@ -28,26 +28,23 @@ bool dot()
     slm::Vector *v1 = (slm::Vector *)(&a);
     slm::Vector *v2 = (slm::Vector *)(&b);
 
-    RandomBuffer<float, 4, 1>(a);
-    RandomBuffer<float, 4, 1>(b);
-
-    std::cout << "a: \t" << *v1;
-    std::cout << "b: \t" << *v2;
+    RandomBuffer<4, 1, float>(a);
+    RandomBuffer<4, 1, float>(b);
+    BENCH_OUT(data, a, *v1);
+    BENCH_OUT(data, b, *v2);
 
     auto ans1 = DirectX::XMVector4Dot(*d1, *d2);
     auto ans2 = glm::dot(*g1, *g2);
     auto ans3 = nlm::dot(*v1, *v2);
     auto ans4 = slm::dot(*v1, *v2);
 
-    std::cout << "drx::dot => \t" << ((float *)&ans1)[0] << std::endl;
-    std::cout << "glm::dot => \t" << ans2 << std::endl;
-    std::cout << "nlm::dot => \t" << ans3 << std::endl;
-    std::cout << "slm::dot => \t" << ans4 << std::endl;
-    std::cout << std::endl;
+    BENCH_OUT(drx, dot, ((float *)&ans1)[0]);
+    BENCH_OUT(glm, dot, ans2);
+    BENCH_OUT(nlm, dot, ans3);
+    BENCH_OUT(slm, dot, ans4);
 
     if (!(Test::CompareFloatingPoint(((float *)&ans1)[0], ans4) && Test::CompareFloatingPoint(ans2, ans4)))
     {
-        Fail("Failed to pass test\n");
         return false;
     }
 

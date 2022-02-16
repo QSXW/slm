@@ -53,7 +53,7 @@ template <size_t count, class T, class... Args>
 inline constexpr void RegressV(T func, Args&&... args)
 {
     float *ptr = gbuffer;
-    for (int i = 0; i < count; i++)
+    for (volatile int i = 0; i < count; i++)
     {
         auto ans = func(std::forward<Args>(args)...);
         *ptr++ = *((float *)&ans);
@@ -62,24 +62,24 @@ inline constexpr void RegressV(T func, Args&&... args)
 
 #define RegressX(count, command) { \
     float *ptr = gbuffer; \
-    for (int i = 0; i < count; i++) \
+    for (volatile int i = 0; i < count; i++) \
     { \
         auto ans = command; \
         *ptr++ = *((float *)&ans); \
     } \
 }
 
-template <class T, size_t rows, size_t cols>
+template <size_t rows, size_t cols, class T>
 inline constexpr void RandomBuffer(T *buffer)
 {
     auto size = rows * cols * sizeof(T);
-    for (int i = 0; i < size; i++)
+    for (volatile int i = 0; i < size; i++)
     {
         buffer[i] = (T)(rand() & 0xFF);
     }
 }
 
-template <class T, class V, size_t rows, size_t cols>
+template <size_t rows, size_t cols, class T, class V>
 inline constexpr bool CompareFloatingPointSequence(const T u, const V v, float epsilon)
 {
     float *a = (float *)&u;
@@ -93,5 +93,11 @@ inline constexpr bool CompareFloatingPointSequence(const T u, const V v, float e
     }
     return true;
 }
+
+#define BENCH_OUT(S, N, V) \
+    std::cout << #S"::"#N": " <<  V << std::endl;
+
+#define BENCH_OUTL(S, N, V) \
+    std::cout << #S"::"#N": \n" <<  V << std::endl;
 
 } // namespace Test

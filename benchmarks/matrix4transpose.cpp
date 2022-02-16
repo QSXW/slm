@@ -13,49 +13,38 @@ namespace Check
 
 bool Matrix4Transpose()
 {
-    slm::Timer t;
     static float a[4 * 4] = { 0 };
 
-    RandomBuffer<float, 4, 4>(a);
+    RandomBuffer<4, 4, float>(a);
 
     DirectX::XMMATRIX *d = (DirectX::XMMATRIX *)&a;
     glm::mat4         *g = (glm::mat4 *)&a;
-    slm::Matrix4      *s = (slm::Matrix4 *)&a;
+    slm::Matrix4 SL_ALIGNED(64) *s = (slm::Matrix4 *)&a;
 
-    Test::RandomBuffer<float, 4, 4>(a);
-
-    std::cout << "Before Transpose: " << std::endl;
-    std::cout << *s << std::endl;
-    std::cout << std::endl;
+    Test::RandomBuffer<4, 4, float>(a);
 
     auto m1 = DirectX::XMMatrixTranspose(*d);
     auto m2 = glm::transpose(*g);
     auto m3 = s->Transpose();
 
-    std::cout << "drx::transpose => " << std::endl;
-    std::cout << *((slm::Matrix4 *)&m1) << std::endl;
+    BENCH_OUTL(data, matrix4, *s);
+    BENCH_OUTL(drx, Matrix4Transpose, *((slm::Matrix4 *)&m1))
+    BENCH_OUTL(glm, Matrix4Transpose, *((slm::Matrix4 *)&m2))
+    BENCH_OUTL(slm, Matrix4Transpose, *((slm::Matrix4 *)&m3))
 
-    std::cout << "glm::transpose => " << std::endl;
-    std::cout << *((slm::Matrix4 *)&m2) << std::endl;
-
-    std::cout << "slm::transpose => " << std::endl;
-    std::cout <<  m3 << std::endl;
-
-    if (!CompareFloatingPointSequence<DirectX::XMMATRIX, slm::Matrix4, 4, 4>(m1, m3, 0.01f) &&
-    !CompareFloatingPointSequence<glm::mat4, slm::Matrix4, 4, 4>(m2, m3, 0.01f))
+    if (!CompareFloatingPointSequence<4, 4>(m1, m3, 0.01f) && !CompareFloatingPointSequence<4, 4>(m2, m3, 0.01f))
     {
-        Fail("Failed to pass the %s\n", __func__);
         return false;
     }
 
     if (Benchmarks::Regressed)
     {
-        static constexpr size_t times = 1000000;
+        static constexpr size_t times = 10000000;
         gbuffer = (float *)malloc(sizeof(float) * times);
         {
             Succeed("DirectX::XMMatrixTranspose()");
             slm::Timer t;
-            RegressV<times>(DirectX::XMMatrixTranspose, *d);
+            RegressX(times, DirectX::XMMatrixTranspose(*d));
         }
         Submit<float, times>(gbuffer);
         {
@@ -67,7 +56,7 @@ bool Matrix4Transpose()
         {
             Succeed("slm::transpose();");
             slm::Timer t;
-            RegressV<times>(slm::Matrix4::transpose, *s);
+            RegressX(times, slm::Matrix4::transpose(*s));
         }
         Submit<float, times>(gbuffer);
         free(gbuffer);

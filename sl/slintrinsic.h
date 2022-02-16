@@ -20,16 +20,24 @@ using namespace sl;
 #define DEFINE_OPERATOR(P, N, O, T) R &operator N (R &b) { v = _m##P##_##O##_##T(v, b.v); return *this; }
 #define OPEARTOR_MUL(P, T) DEFINE_OPERATOR(P, *, mul, T)
 #define OPEARTOR_ADD(P, T) DEFINE_OPERATOR(P, +, add, T)
+#define OPEARTOR_SUB(P, T) DEFINE_OPERATOR(P, -, sub, T)
 
 struct int32x4
 {
 #define R int32x4
+public:
     using Primitive = __m128i;
+
+public:
     CONSTURCTOR_SET1(m, epi8,   int8_t)
     CONSTURCTOR_SET1(m, epi16,  int16_t)
     CONSTURCTOR_SET1(m, epi32,  int32_t)
     CONSTURCTOR_SET1(m, epi64x, int64_t)
     CONSTURCTOR_LOAD(m, si128,  Primitive)
+
+    OPEARTOR_ADD(m, epi32)
+    OPEARTOR_SUB(m, epi32)
+    OPEARTOR_MUL(m, epi32)
 
 #undef R
 private:
@@ -49,13 +57,9 @@ public:
     CONSTURCTOR_SET1(m, ps, float)
     CONSTURCTOR_LOAD(m, ps, float)
 
+    OPEARTOR_ADD(m, ps)
+    OPEARTOR_SUB(m, ps)
     OPEARTOR_MUL(m, ps)
-
-    floatx4 &operator+(floatx4 &other)
-    {
-        v = _mm_add_ps(v, other.v);
-        return *this;
-    }
 
     operator float() const
     {
@@ -80,12 +84,41 @@ private:
 struct int32x8
 {
 #define R int32x8
+public:
     using Primitive = __m256i;
+
+public:
     CONSTURCTOR_SET1(m256, epi8,   int8_t)
     CONSTURCTOR_SET1(m256, epi16,  int16_t)
     CONSTURCTOR_SET1(m256, epi32,  int32_t)
     CONSTURCTOR_SET1(m256, epi64x, int64_t)
-    CONSTURCTOR_LOAD(m256, si256, Primitive)
+    CONSTURCTOR_LOAD(m256, si256,  Primitive)
+
+    OPEARTOR_ADD(m256, epi32)
+    OPEARTOR_SUB(m256, epi32)
+    OPEARTOR_MUL(m256, epi32)
+
+#undef R
+private:
+    Primitive v;
+};
+
+struct floatx8
+{
+#define R floatx8
+public:
+    using Primitive = __m256;
+
+public:
+    floatx8() = default;
+
+    CONSTRUCTOR_PRIMITIVE()
+    CONSTURCTOR_SET1(m256, ps, float)
+    CONSTURCTOR_LOAD(m256, ps, float)
+
+    OPEARTOR_ADD(m256, ps)
+    OPEARTOR_SUB(m256, ps)
+    OPEARTOR_MUL(m256, ps)
 
 #undef R
 private:
@@ -106,6 +139,10 @@ public:
     CONSTURCTOR_SET1(m512, epi64, int64_t)
     CONSTURCTOR_LOAD(m512, si512, Primitive)
 
+    OPEARTOR_ADD(m512, epi32)
+    OPEARTOR_SUB(m512, epi32)
+    OPEARTOR_MUL(m512, epi32)
+
 #undef R
 private:
     Primitive v;
@@ -124,7 +161,11 @@ public:
     CONSTURCTOR_SET1(m512, ps, float)
     CONSTURCTOR_LOAD(m512, ps, float)
 
-    Primitive permutexvar_ps(const int32x16 &vindex)
+    OPEARTOR_ADD(m512, ps)
+    OPEARTOR_SUB(m512, ps)
+    OPEARTOR_MUL(m512, ps)
+
+    Primitive permutexvar(const int32x16 &vindex)
     {
        return _mm512_permutexvar_ps(vindex, v);
     }

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.10)
 
 project(slapi LANGUAGES CXX)
 
@@ -14,15 +14,13 @@ set(SRC_FILES
 set(PROJECT_FILES
     ${SRC_FILES})
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(COMPILER_OPTIONS "")
-else(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "CLANG")
-    set(COMPILER_OPTIONS -march=native)
-endif()
-
 source_group("\\" FILE ${PROJECT_FILES})
 
-add_library(${PROJECT_NAME} INTERFACE ${PROJECT_FILES})
+add_library(${PROJECT_NAME} INTERFACE)
 
 target_include_directories(${PROJECT_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/)
-target_compile_options(${PROJECT_NAME} INTERFACE ${COMPILER_OPTIONS})
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+        CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(${PROJECT_NAME} INTERFACE -march=native)
+endif()

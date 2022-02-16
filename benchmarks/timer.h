@@ -16,14 +16,14 @@ public:
     ~Timer()
     {
         end = clock();
-        duration = ((double)end - (double)start) / CLOCKS_PER_SEC;
-        printf("\nTime Consuming: %g\n", duration);
+        clock_t count = end - start;
+        double duration = (double)count / CLOCKS_PER_SEC;
+        printf("\nClock: %d\tTime Consuming: %g\n", (int)count, duration);
     }
 
 private:
     clock_t start;
     clock_t end;
-    double duration;
 };
 
 }
