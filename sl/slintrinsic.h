@@ -179,6 +179,30 @@ private:
     Primitive v;
 };
 
+struct int16x16
+{
+#define R int16x16
+public:
+    using Primitive = __m256i;
+
+public:
+    CONSTRUCTOR_PRIMITIVE()
+    CONSTURCTOR_SET1(m256, epi8,  int8_t)
+    CONSTURCTOR_SET1(m256, epi16, int16_t)
+    CONSTURCTOR_SET1(m256, epi32, int32_t)
+    CONSTURCTOR_LOAD(m256, si256, Primitive)
+
+    OPEARTOR_ADD(m256, epi16)
+    OPEARTOR_SUB(m256, epi16)
+    DEFINE_OPERATOR(m256, *, mullo, epi16)
+
+    DEFINE_UNALIGNED_STORE(m256, epi32)
+
+#undef R
+private:
+    Primitive v;
+};
+
 struct int16x32
 {
 #define R int16x32
