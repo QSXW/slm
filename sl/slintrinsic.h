@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef __SLINTRINSIC_H__
-#define __SLINTRINSIC_H__
+#ifndef SLINTRINSIC_H__
+#define SLINTRINSIC_H__
 
 #include <immintrin.h>
 #include <iostream>
@@ -9,9 +9,8 @@
 #include "slapi.h"
 #include "slcast.h"
 
-using namespace sl;
-
-#define SL_DONT_USE_DIV [[deprecated("avoid to use, try convert to a multiply before broadcast")]]
+namespace sl
+{
 
 #define CONSTRUCTOR_PRIMITIVE() R(Primitive v) : v{ v } {} operator Primitive() const { return v; };
 #define CONSTURCTOR_SET1(P, S, T) R(T n) : v{ _m##P##_set1_##S(n) } {}
@@ -32,7 +31,7 @@ public:
     using Primitive = __m128i;
 
 public:
-    CONSTRUCTOR_PRIMITIVE();
+    CONSTRUCTOR_PRIMITIVE()
     CONSTURCTOR_SET1(m, epi8,   int8_t)
     CONSTURCTOR_SET1(m, epi16,  int16_t)
     CONSTURCTOR_SET1(m, epi32,  int32_t)
@@ -92,7 +91,7 @@ public:
     using Primitive = __m256i;
 
 public:
-    CONSTRUCTOR_PRIMITIVE();
+    CONSTRUCTOR_PRIMITIVE()
     CONSTURCTOR_SET1(m256, epi8,   int8_t)
     CONSTURCTOR_SET1(m256, epi16,  int16_t)
     CONSTURCTOR_SET1(m256, epi32,  int32_t)
@@ -137,10 +136,10 @@ public:
     using Primitive = __m512i;
 
 public:
-    CONSTRUCTOR_PRIMITIVE();
-    CONSTURCTOR_SET1(m512, epi8,   int8_t)
-    CONSTURCTOR_SET1(m512, epi16,  int16_t)
-    CONSTURCTOR_SET1(m512, epi32,  int32_t)
+    CONSTRUCTOR_PRIMITIVE()
+    CONSTURCTOR_SET1(m512, epi8,  int8_t)
+    CONSTURCTOR_SET1(m512, epi16, int16_t)
+    CONSTURCTOR_SET1(m512, epi32, int32_t)
     CONSTURCTOR_SET1(m512, epi64, int64_t)
     CONSTURCTOR_LOAD(m512, si512, Primitive)
 
@@ -187,10 +186,10 @@ public:
     using Primitive = __m512i;
 
 public:
-    CONSTRUCTOR_PRIMITIVE();
-    CONSTURCTOR_SET1(m512, epi8,   int8_t)
-    CONSTURCTOR_SET1(m512, epi16,  int16_t)
-    CONSTURCTOR_SET1(m512, epi32,  int32_t)
+    CONSTRUCTOR_PRIMITIVE()
+    CONSTURCTOR_SET1(m512, epi8,  int8_t)
+    CONSTURCTOR_SET1(m512, epi16, int16_t)
+    CONSTURCTOR_SET1(m512, epi32, int32_t)
     CONSTURCTOR_SET1(m512, epi64, int64_t)
     CONSTURCTOR_LOAD(m512, si512, Primitive)
 
@@ -206,4 +205,6 @@ private:
     Primitive v;
 };
 
-#endif /* __SLINTRINSIC_H__ */
+}
+
+#endif /* SLINTRINSIC_H__ */
