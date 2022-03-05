@@ -17,10 +17,13 @@ using namespace sl;
 #define CONSTURCTOR_SET1(P, S, T) R(T n) : v{ _m##P##_set1_##S(n) } {}
 #define CONSTURCTOR_LOAD(P, S, T) R(const void *data) : v{ _m##P##_load_##S((T *)data) } {}
 
-#define DEFINE_OPERATOR(P, N, O, T) R &operator N (R &b) { v = _m##P##_##O##_##T(v, b.v); return *this; }
+#define DEFINE_OPERATOR(P, N, O, T) R operator N (R &b) { R p{ _m##P##_##O##_##T(v, b.v) }; return p; }
 #define OPEARTOR_MUL(P, T) DEFINE_OPERATOR(P, *, mul, T)
 #define OPEARTOR_ADD(P, T) DEFINE_OPERATOR(P, +, add, T)
 #define OPEARTOR_SUB(P, T) DEFINE_OPERATOR(P, -, sub, T)
+
+#define DEFINE_ALIGNED_STORE(P, S)   void aligned_store(void *dst) { _m##P##_store_##S(dst, v); }
+#define DEFINE_UNALIGNED_STORE(P, S) void store(void *dst) { _m##P##_storeu_##S(dst, v); }
 
 struct int32x4
 {
@@ -29,6 +32,7 @@ public:
     using Primitive = __m128i;
 
 public:
+    CONSTRUCTOR_PRIMITIVE();
     CONSTURCTOR_SET1(m, epi8,   int8_t)
     CONSTURCTOR_SET1(m, epi16,  int16_t)
     CONSTURCTOR_SET1(m, epi32,  int32_t)
@@ -88,6 +92,7 @@ public:
     using Primitive = __m256i;
 
 public:
+    CONSTRUCTOR_PRIMITIVE();
     CONSTURCTOR_SET1(m256, epi8,   int8_t)
     CONSTURCTOR_SET1(m256, epi16,  int16_t)
     CONSTURCTOR_SET1(m256, epi32,  int32_t)
@@ -169,6 +174,32 @@ public:
     {
        return _mm512_permutexvar_ps(vindex, v);
     }
+
+#undef R
+private:
+    Primitive v;
+};
+
+struct int16x32
+{
+#define R int16x32
+public:
+    using Primitive = __m512i;
+
+public:
+    CONSTRUCTOR_PRIMITIVE();
+    CONSTURCTOR_SET1(m512, epi8,   int8_t)
+    CONSTURCTOR_SET1(m512, epi16,  int16_t)
+    CONSTURCTOR_SET1(m512, epi32,  int32_t)
+    CONSTURCTOR_SET1(m512, epi64, int64_t)
+    CONSTURCTOR_LOAD(m512, si512, Primitive)
+
+    OPEARTOR_ADD(m512, epi16)
+    OPEARTOR_SUB(m512, epi16)
+    DEFINE_OPERATOR(m512, *, mullo, epi16)
+
+    DEFINE_ALIGNED_STORE(m512, epi64)
+    DEFINE_UNALIGNED_STORE(m512, epi64)
 
 #undef R
 private:
