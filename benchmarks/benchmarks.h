@@ -51,7 +51,7 @@ inline constexpr void Fail(const char *s, Args&&... args)
 }
 
 template <size_t rows, size_t cols, class T>
-inline constexpr void RandomBuffer(T *buffer)
+inline constexpr void randomize(T *buffer)
 {
     auto size = rows * cols * sizeof(T);
     for (volatile int i = 0; i < size; i++)
@@ -60,7 +60,7 @@ inline constexpr void RandomBuffer(T *buffer)
     }
 }
 
-bool CompareFloat(float a, float b, float epsilon = 0.01f)
+bool compare_float(float a, float b, float epsilon = 0.01f)
 {
     float diff = fabsf(a - b);
 
@@ -74,17 +74,28 @@ bool CompareFloat(float a, float b, float epsilon = 0.01f)
 }
 
 template <size_t rows, size_t cols, class T, class V>
-inline constexpr bool Equals(const T u, const V v, float epsilon = 0.01f)
+inline constexpr bool equals(const T u, const V v, float epsilon = 0.01f)
 {
-    float *a = (float *)&u;
-    float *b = (float *)&v;
+    float *a = nullptr;
+    float *b = nullptr;
+    if constexpr (std::is_pointer<T>())
+    {
+        a = (float *)u;
+        b = (float *)v;
+    }
+    else
+    {
+        a = (float *)&u;
+        b = (float *)&v;
+    }
     for (size_t i = 0, length = rows * cols; i < length; i++)
     {
-        if (!CompareFloat(a[i], b[i], epsilon))
+        if (!compare_float(a[i], b[i], epsilon))
         {
             return false;
         }
     }
+
     return true;
 }
 

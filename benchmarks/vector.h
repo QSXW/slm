@@ -34,8 +34,8 @@ public:
         slm::Vector *v1 = (slm::Vector *)(&a);
         slm::Vector *v2 = (slm::Vector *)(&b);
 
-        RandomBuffer<4, 1, float>(a);
-        RandomBuffer<4, 1, float>(b);
+        randomize<4, 1, float>(a);
+        randomize<4, 1, float>(b);
         BENCH_OUT(data, a, *v1);
         BENCH_OUT(data, b, *v2);
 
@@ -49,7 +49,7 @@ public:
         BENCH_OUT(nlm, dot, ans3);
         BENCH_OUT(slm, dot, ans4);
 
-        if (!(CompareFloat(((float *)&ans1)[0], ans4) && CompareFloat(ans2, ans4)))
+        if (!(compare_float(((float *)&ans1)[0], ans4) && compare_float(ans2, ans4)))
         {
             return false;
         }

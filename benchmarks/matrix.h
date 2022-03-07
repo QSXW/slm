@@ -15,7 +15,7 @@ public:
     virtual bool comformance() const override
     {
         float SL_ALIGNED(64) a[512] = { 0 };
-        RandomBuffer<4, 4, float>(a);
+        randomize<4, 4, float>(a);
 
         const auto d = sl::rcast<DirectX::XMMATRIX *>(&a);
         const auto g = sl::rcast<glm::mat4 *>(&a);
@@ -30,7 +30,7 @@ public:
         BENCH_OUTL(glm, Matrix4Transpose, *((slm::Matrix4 *)&m2))
         BENCH_OUTL(slm, Matrix4Transpose, *((slm::Matrix4 *)&m3))
 
-        if (!Equals<4, 4>(m1, m3) && !Equals<4, 4>(m2, m3))
+        if (!equals<4, 4>(m1, m3) && !equals<4, 4>(m2, m3))
         {
             return false;
         }

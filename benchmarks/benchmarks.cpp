@@ -10,12 +10,14 @@
 #include "benchmarks.h"
 #include "vector.h"
 #include "matrix.h"
+#include "transform.h"
 
 namespace Test
 {
 
 static Matrix4 matrix4;
 static Vector4 vector4;
+static Transform transform;
 
 }
 
@@ -24,6 +26,7 @@ int main()
     std::vector<const Test::Unit *> benchmarks;
     benchmarks.emplace_back(&Test::matrix4);
     benchmarks.emplace_back(&Test::vector4);
+    benchmarks.emplace_back(&Test::transform);
 
     int sum  = 0;
     int fail = 0;
