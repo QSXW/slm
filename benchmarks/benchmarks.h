@@ -9,15 +9,21 @@ extern "C" int slm_submit_result(void *ptr, size_t size);
 namespace Test
 {
 
+class Unit
+{
+public:
+    virtual const std::string name() const = 0;
+
+    virtual bool comformance() const = 0;
+
+    virtual void performance() const { }
+};
+
 template <class T, size_t size>
 int Submit(T *ptr)
 {
     return slm_submit_result(ptr, sizeof(T) * size);
 }
-
-static float *gbuffer = nullptr;
-
-bool CompareFloatingPoint(float a, float b, float epsilon = 0.01f);
 
 struct Benchmarks
 {
@@ -33,32 +39,7 @@ inline constexpr void Fail(const char *s, Args&&... args)
     fprintf(stderr, s, std::forward<Args>(args)...);
 }
 
-template <class... Args>
-inline constexpr void Succeed(const char *s, Args&&... args)
-{
-    printf(s, std::forward<Args>(args)...);
-}
-
-template <size_t count, class T, class... Args>
-inline constexpr void Regress(T func, Args&&... args)
-{
-    for (int i = 0; i < count; i++)
-    {
-        func(std::forward<Args>(args)...);
-    }
-
-}
-
-template <size_t count, class T, class... Args>
-inline constexpr void RegressV(T func, Args&&... args)
-{
-    float *ptr = gbuffer;
-    for (volatile int i = 0; i < count; i++)
-    {
-        auto ans = func(std::forward<Args>(args)...);
-        *ptr++ = *((float *)&ans);
-    }
-}
+#define Succeed printf
 
 #define RegressX(count, command) { \
     float *ptr = gbuffer; \
@@ -79,14 +60,27 @@ inline constexpr void RandomBuffer(T *buffer)
     }
 }
 
+bool CompareFloat(float a, float b, float epsilon = 0.01f)
+{
+    float diff = fabsf(a - b);
+
+    if (diff < epsilon)
+    {
+        return true;
+    }
+    Fail( "Test failed comparing %g with %g (abs diff=%g with epsilon=%g)\n", a, b, diff, epsilon);
+
+    return false;
+}
+
 template <size_t rows, size_t cols, class T, class V>
-inline constexpr bool CompareFloatingPointSequence(const T u, const V v, float epsilon)
+inline constexpr bool Equals(const T u, const V v, float epsilon = 0.01f)
 {
     float *a = (float *)&u;
     float *b = (float *)&v;
     for (size_t i = 0, length = rows * cols; i < length; i++)
     {
-        if (!CompareFloatingPoint(a[i], b[i], epsilon))
+        if (!CompareFloat(a[i], b[i], epsilon))
         {
             return false;
         }

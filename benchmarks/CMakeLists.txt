@@ -7,8 +7,6 @@ add_subdirectory(3rdparty/glm)
 
 add_executable(${PROJECT_NAME}
     benchmarks.cpp
-    dot.cpp
-    matrix4transpose.cpp
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE -m64)
