@@ -9,7 +9,9 @@ set(SRC_FILES
     nlm.h
     slm.h
     vector.h
-    matrix.h)
+    matrix.h
+    utils.h
+    transform.h)
 
 source_group("\\" FILES ${SRC_FILES})
 source_group("\\x86\\" FILES ${ASM_FILES})
